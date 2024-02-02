@@ -30,7 +30,7 @@ namespace Aircraft
         public int stepTimeout = 300;
 
 
-
+        // これはインスペクターへ載らない
         public int NextCheckpointIndex { get; set; }
 
         private AircraftArea area;
@@ -75,13 +75,22 @@ namespace Aircraft
 
         }
 
-
+        /// <summary>
+        /// Called when a new episode begins
+        /// </summary>
         public override void OnEpisodeBegin()
         {
             // Reset the velocity, position, and orientation
             rigidbody.linearVelocity = Vector3.zero;
             rigidbody.angularVelocity = Vector3.zero;
             trail.emitting = false;
+            // this= AircraftAgent,area.trainigMode = Trueであればtrainigmodeになる
+            area.ResetAgentPosition(agent: this, randomize: area.trainingMode);
+
+            // Update the step timeout if training
+            // StepCount = 0,stepTimeout = 300,nextStepCount = 300
+            if (area.trainingMode) nextStepTimeout = StepCount + stepTimeout;
+
         }
 
 
@@ -141,6 +150,7 @@ namespace Aircraft
             Vector3 nextCheckpointDir = area.Checkpoints[NextCheckpointIndex].transform.position - transform.position;
             Vector3 localCheckpointDir = transform.InverseTransformDirection(nextCheckpointDir);
             return localCheckpointDir;
+            Debug.Log(localCheckpointDir);
         }
 
         /// <summary>
@@ -214,8 +224,24 @@ namespace Aircraft
             // Set the new rotation
             transform.rotation = Quaternion.Euler(pitch, yaw, roll);
 
+        }
+
+
+        /// <summary>
+        /// React to entering a trigger
+        /// </summary>
+        /// <param name="other">The collider entered</param>
+        private void OnTriggerEnter(Collider other)
+        {
+            if (other.transform.CompareTag("checkpoint") &&
+                other.gameObject == area.Checkpoints[NextCheckpointIndex])
+            {
+                GotCheckpoint();
+            }   
+
 
         }
+
 
 
 
