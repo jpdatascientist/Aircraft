@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using Unity.MLAgents.Actuators;
 using UnityEngine;
+//PackageManagerにてInput Systemの導入
 using UnityEngine.InputSystem;
 
 
@@ -29,7 +30,6 @@ namespace Aircraft
             pauseInput.Enable();
 
         }
-
 
 
         /// <summary>

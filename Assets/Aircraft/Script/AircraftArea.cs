@@ -26,6 +26,7 @@ namespace Aircraft
 
         //GameObject型の要素を格納できる動的な配列を表す
         //変数をクラス内外からアクセス可能にし、読み取り=get と書き込み=set(privateはできない) の両方ができる
+        // これはインスペクターへ載らない
         public List<GameObject> Checkpoints { get; private set; }
 
         /// <summary>
@@ -34,6 +35,7 @@ namespace Aircraft
 
         private void Awake()
         {
+            //Aircraftagent配列
             if (AircraftAgents == null) FindAircraftAgents();
 
         }
@@ -51,6 +53,7 @@ namespace Aircraft
         /// Set up the area
         private void Start()
         {
+            //Chenckpoints配列
             if (Checkpoints == null) CreateCheckpoints();
 
         }
@@ -85,8 +88,8 @@ namespace Aircraft
         }
 
         /// <summary>
-        /// Resets the position of an agent using its current NextCheckpointIndex, unless
-        /// randomize is true, then will pick a new random checkpoint
+        /// Resets the position of an agent using its current NextCheckpointIndex, 
+        /// unless randomize is true, then will pick a new random checkpoint
         /// </summary>
         /// <param name="agent">The agent to reset</param>
         /// <param name="randomize">If true, will pick a new NextCheckpointIndex before reset</param>
@@ -103,7 +106,7 @@ namespace Aircraft
                 agent.NextCheckpointIndex = Random.Range(0, Checkpoints.Count);
             }
 
-            // Set start position ti the previous checkpoint
+            // Set start position the previous checkpoint
             int previousCheckpointIndex = agent.NextCheckpointIndex - 1;
             //チェックポイントがスタート位置から始まるように
             if (previousCheckpointIndex == -1) previousCheckpointIndex = Checkpoints.Count - 1;

@@ -100,7 +100,7 @@ namespace Aircraft
         /// Read action inputs from vectorAction 決定→行動         
         /// </summary>
         /// <param name = "vectorAction" > The chosen actions</param>
-        ///ビデオではfloatとしていたが、引数の書き方はこれでないとoverrideできない      
+        /// ビデオではfloatとしていたが、引数の書き方はこれでないとoverrideできない      
 
         public override void OnActionReceived(ActionBuffers vectorAction)
         {
@@ -142,6 +142,31 @@ namespace Aircraft
 
 
         /// <summary>
+        /// Prevent the agent from moving and taking actions,Agentが動くのを防ぐ
+        /// </summary>
+        public void FreezeAgent()
+        {
+            Debug.Assert(area.trainingMode == false, "Freeze/Thaw not supported in trainig");
+            frozen = true;
+            rigidbody.Sleep();
+            trail.emitting = false;
+        }
+
+        /// <summary>
+        /// Resume agent movement and actions,Agentを復活させる
+        /// </summary>
+        public void ThawAgent()
+        {
+            Debug.Assert(area.trainingMode == false, "Freeze/Thaw not supported in trainig");
+            frozen = false;
+            rigidbody.WakeUp();
+        }
+
+
+
+
+
+        /// <summary>
         /// Gets a vector to the next checkpoint the agent needs to fly through　
         /// </summary>
         /// <returns>A local-space vector</returns>
@@ -150,7 +175,6 @@ namespace Aircraft
             Vector3 nextCheckpointDir = area.Checkpoints[NextCheckpointIndex].transform.position - transform.position;
             Vector3 localCheckpointDir = transform.InverseTransformDirection(nextCheckpointDir);
             return localCheckpointDir;
-            Debug.Log(localCheckpointDir);
         }
 
         /// <summary>
@@ -167,11 +191,6 @@ namespace Aircraft
                 nextStepTimeout = StepCount + stepTimeout;
             }
         }
-
-
-
-
-
 
 
 
@@ -240,6 +259,58 @@ namespace Aircraft
             }   
 
 
+        }
+
+
+        /// <summary>
+        /// React to collisions
+        /// </summary>
+        /// <param name="collision">Collision info</param>
+        private void OnCollisionEnter(Collision collision)
+        {
+            // もし衝突したのが、他の飛行機ではなかった場合
+            if (!collision.transform.CompareTag("agent"))
+            {
+                // もしtrainigModeであれば
+                if (area.trainingMode)
+                {
+                    AddReward(-1f);
+                    EndEpisode();
+                }
+                else
+                {
+                    StartCoroutine(ExplosionReset());
+                }
+            }
+        }
+
+
+        /// <summary>
+        /// Resets the aircraft to the most recent complete checkpoint
+        /// </summary>
+        /// <returns>yield return</returns>
+        /// コルーチンメソッドを使用してエージェントの爆発リセットを実装している　一連の処理を時間の経過とともに行う
+        private IEnumerator ExplosionReset()
+        {
+            // Agent凍結
+            FreezeAgent();
+
+            // Disable aircraft mesh object, enable explosion
+            // AgentのmeshObjectを非アクティブにて外観を爆発エフェクトへ
+            meshObject.SetActive(false);
+            explosionEffect.SetActive(true);
+            // 2秒間の待機
+            yield return new WaitForSeconds(2f);
+
+            // Disable explosion, re-enable aircraft mesh
+            meshObject.SetActive(true);
+            explosionEffect.SetActive(false);
+
+            // Reset position
+            area.ResetAgentPosition(agent: this);
+            yield return new WaitForSeconds(1f);
+
+            ThawAgent();
         }
 
 
